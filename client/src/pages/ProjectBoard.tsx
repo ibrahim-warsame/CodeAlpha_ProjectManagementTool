@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Plus, MoreVertical, Calendar, MessageSquare } from 'lucide-react';
 import { useSocket } from '../contexts/SocketContext';
+import { API_BASE_URL } from '../config/api';
 import toast from 'react-hot-toast';
 
 interface Task {
@@ -77,7 +78,7 @@ const ProjectBoard: React.FC = () => {
   const fetchProject = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/projects/${projectId}`, {
+      const response = await fetch(`${API_BASE_URL}/api/projects/${projectId}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -96,21 +97,23 @@ const ProjectBoard: React.FC = () => {
   const fetchTasks = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/projects/${projectId}/tasks`, {
+      const response = await fetch(`${API_BASE_URL}/api/projects/${projectId}/tasks`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
       
       if (response.ok) {
-        const tasks = await response.json();
-        organizeTasksIntoColumns(tasks);
+        const data = await response.json();
+        const updatedColumns = columns.map(col => ({
+          ...col,
+          tasks: data.filter((task: Task) => task.status === col.id)
+        }));
+        setColumns(updatedColumns);
       }
     } catch (error) {
       console.error('Error fetching tasks:', error);
       toast.error('Failed to fetch tasks');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -162,12 +165,68 @@ const ProjectBoard: React.FC = () => {
     });
   };
 
+  const createTask = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE_URL}/api/projects/${projectId}/tasks`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(newTask)
+      });
+      
+      if (response.ok) {
+        const task = await response.json();
+        addTaskToColumn(task);
+        setNewTask({
+          title: '',
+          description: '',
+          priority: 'medium',
+          assignee: '',
+          dueDate: ''
+        });
+        setShowCreateTask(false);
+        toast.success('Task created successfully!');
+      } else {
+        toast.error('Failed to create task');
+      }
+    } catch (error) {
+      console.error('Error creating task:', error);
+      toast.error('Failed to create task');
+    }
+  };
+
+  const updateTaskStatus = async (taskId: string, newStatus: string) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE_URL}/api/tasks/${taskId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ status: newStatus })
+      });
+      
+      if (response.ok) {
+        if (socket) {
+          socket.emit('taskMoved', { taskId, fromStatus: '', toStatus: newStatus });
+        }
+      }
+    } catch (error) {
+      console.error('Error updating task status:', error);
+    }
+  };
+
   const handleCreateTask = async (e: React.FormEvent) => {
     e.preventDefault();
     
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/projects/${projectId}/tasks`, {
+      const response = await fetch(`${API_BASE_URL}/api/projects/${projectId}/tasks`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -216,7 +275,7 @@ const ProjectBoard: React.FC = () => {
     
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/tasks/${taskId}`, {
+      const response = await fetch(`${API_BASE_URL}/api/tasks/${taskId}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',

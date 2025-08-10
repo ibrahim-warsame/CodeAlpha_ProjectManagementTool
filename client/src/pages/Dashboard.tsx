@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Plus, Calendar, Users, ArrowRight } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useSocket } from '../contexts/SocketContext';
+import { API_BASE_URL } from '../config/api';
 import toast from 'react-hot-toast';
 
 interface Project {
@@ -49,7 +50,7 @@ const Dashboard: React.FC = () => {
   const fetchProjects = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/projects', {
+      const response = await fetch(`${API_BASE_URL}/api/projects`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -67,12 +68,11 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  const handleCreateProject = async (e: React.FormEvent) => {
+  const createProject = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/projects', {
+      const response = await fetch(`${API_BASE_URL}/api/projects`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -82,15 +82,13 @@ const Dashboard: React.FC = () => {
       });
       
       if (response.ok) {
-        const project = await response.json();
-        setProjects(prev => [project, ...prev]);
-        setShowCreateModal(false);
+        const data = await response.json();
+        setProjects([...projects, data]);
         setNewProject({ name: '', description: '' });
+        setShowCreateModal(false);
         toast.success('Project created successfully!');
-        
-        if (socket) {
-          socket.emit('createProject', project);
-        }
+      } else {
+        toast.error('Failed to create project');
       }
     } catch (error) {
       console.error('Error creating project:', error);
@@ -223,7 +221,7 @@ const Dashboard: React.FC = () => {
           <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
             <div className="mt-3">
               <h3 className="text-lg font-medium text-gray-900 mb-4">Create New Project</h3>
-              <form onSubmit={handleCreateProject}>
+              <form onSubmit={createProject}>
                 <div className="mb-4">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Project Name

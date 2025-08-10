@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
+import { API_BASE_URL } from '../config/api';
 
 interface User {
   id: string;
@@ -48,7 +49,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const fetchUser = async () => {
     try {
-      const response = await axios.get('/api/auth/profile', {
+      const response = await axios.get(`${API_BASE_URL}/api/auth/profile`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setUser(response.data);
@@ -63,7 +64,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const login = async (email: string, password: string) => {
     try {
-      const response = await axios.post('/api/auth/login', { email, password });
+      const response = await axios.post(`${API_BASE_URL}/api/auth/login`, { email, password });
       const { token: newToken, user: userData } = response.data;
       
       localStorage.setItem('token', newToken);
@@ -80,7 +81,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const register = async (email: string, password: string, firstName: string, lastName: string) => {
     try {
-      const response = await axios.post('/api/auth/register', {
+      const response = await axios.post(`${API_BASE_URL}/api/auth/register`, {
         email,
         password,
         firstName,

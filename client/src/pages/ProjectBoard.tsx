@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Plus, MoreVertical, User, Calendar, MessageSquare } from 'lucide-react';
-import { useAuth } from '../contexts/AuthContext';
+import { Plus, MoreVertical, Calendar, MessageSquare } from 'lucide-react';
 import { useSocket } from '../contexts/SocketContext';
 import toast from 'react-hot-toast';
 
@@ -41,7 +40,6 @@ const ProjectBoard: React.FC = () => {
     dueDate: ''
   });
   
-  const { user } = useAuth();
   const { socket } = useSocket();
   const navigate = useNavigate();
 

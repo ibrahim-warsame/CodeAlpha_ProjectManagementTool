@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { io, Socket } from 'socket.io-client';
-import { useAuth } from './AuthContext';
 
 interface SocketContextType {
   socket: Socket | null;
@@ -24,45 +23,36 @@ interface SocketProviderProps {
 }
 
 export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
-  const { token, user } = useAuth();
   const [socket, setSocket] = useState<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
-    if (token && user) {
-      const newSocket = io('http://localhost:5000', {
-        auth: { token },
-        transports: ['websocket', 'polling']
-      });
+    // Initialize socket connection
+    const newSocket = io('http://localhost:5000', {
+      transports: ['websocket', 'polling']
+    });
 
-      newSocket.on('connect', () => {
-        console.log('Connected to server');
-        setIsConnected(true);
-      });
+    newSocket.on('connect', () => {
+      console.log('Connected to server');
+      setIsConnected(true);
+    });
 
-      newSocket.on('disconnect', () => {
-        console.log('Disconnected from server');
-        setIsConnected(false);
-      });
+    newSocket.on('disconnect', () => {
+      console.log('Disconnected from server');
+      setIsConnected(false);
+    });
 
-      newSocket.on('connect_error', (error) => {
-        console.error('Connection error:', error);
-        setIsConnected(false);
-      });
+    newSocket.on('connect_error', (error) => {
+      console.error('Connection error:', error);
+      setIsConnected(false);
+    });
 
-      setSocket(newSocket);
+    setSocket(newSocket);
 
-      return () => {
-        newSocket.close();
-      };
-    } else {
-      if (socket) {
-        socket.close();
-        setSocket(null);
-        setIsConnected(false);
-      }
-    }
-  }, [token, user]);
+    return () => {
+      newSocket.close();
+    };
+  }, []);
 
   const joinProject = (projectId: string) => {
     if (socket && isConnected) {

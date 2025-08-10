@@ -1,4 +1,3 @@
-import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext';
 import Layout from './components/Layout';
@@ -8,7 +7,7 @@ import Dashboard from './pages/Dashboard';
 import ProjectBoard from './pages/ProjectBoard';
 import LoadingSpinner from './components/LoadingSpinner';
 
-function App() {
+function AppContent() {
   const { user, loading } = useAuth();
 
   if (loading) {
@@ -31,6 +30,10 @@ function App() {
       )}
     </Routes>
   );
+}
+
+function App() {
+  return <AppContent />;
 }
 
 export default App;
